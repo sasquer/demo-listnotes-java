@@ -14,7 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.NavController;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.sasquer.listnotes.R;
 import com.sasquer.listnotes.base.BaseFragment;
@@ -77,7 +80,7 @@ public class NoteDetailsFragment extends BaseFragment {
 
         mViewModel.getTitle().observe(this, s -> getToolbar().setTitle(s));
         mViewModel.isSaveItemClicked().observe(this, aBoolean -> {
-            mViewModel.saveNoteToDatabase();
+            mViewModel.saveNoteToDatabase(mAdapter.getList());
         });
         mViewModel.isConfirmBack().observe(this, aBoolean -> {
                     callback.remove();
@@ -88,6 +91,13 @@ public class NoteDetailsFragment extends BaseFragment {
         mViewModel.getShowConfirmDialog().observe(this, aBoolean -> {
             if (aBoolean)
                 showConfirmDialog();
+        });
+
+        mViewModel.getCheckItems().observe(this, noteCheckItems -> {
+            if (noteCheckItems.isEmpty())
+                mAdapter.addEmptyItem();
+            else
+                mAdapter.setItems(noteCheckItems);
         });
     }
 
@@ -129,9 +139,14 @@ public class NoteDetailsFragment extends BaseFragment {
     }
 
     private void setupRecyclerView() {
-        mAdapter = new CheckItemAdapter();
+        RecyclerView recyclerView = binding.rvCheckedItem;
+        mAdapter = new CheckItemAdapter(mViewModel);
+        ItemTouchHelper.Callback callback = new CheckItemTouchHelperCallback(mAdapter);
+        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(recyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        binding.rvCheckedItem.setLayoutManager(layoutManager);
-        binding.rvCheckedItem.setAdapter(mAdapter);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(mAdapter);
     }
 }

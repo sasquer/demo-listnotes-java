@@ -5,8 +5,14 @@ import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+
+import com.sasquer.listnotes.data.ListCheckItemsConverter;
+
+import java.util.List;
 
 @Entity(tableName = "notes")
+@TypeConverters({ListCheckItemsConverter.class})
 public final class Note {
 
     @PrimaryKey(autoGenerate = true)
@@ -20,6 +26,10 @@ public final class Note {
     @Nullable
     @ColumnInfo(name = "timeCreated")
     private Long mTimeCreated;
+
+    @Nullable
+    @ColumnInfo(name = "checkList")
+    private List<NoteCheckItem> checkList;
 
 
     private Note(@NonNull int id, @Nullable String title) {
@@ -58,12 +68,22 @@ public final class Note {
         mTimeCreated = timeCreated;
     }
 
-    @Override
-    public String toString() {
-        return "User :" +
-                "mId='" + mId + '\'' +
-                ", mTitle='" + mTitle + '\'';
+    @Nullable
+    public List<NoteCheckItem> getCheckList() {
+        return checkList;
     }
 
+    public void setCheckList(@Nullable List<NoteCheckItem> checkList) {
+        this.checkList = checkList;
+    }
 
+    @Override
+    public String toString() {
+        return "Note{" +
+                "mId=" + mId +
+                ", mTitle='" + mTitle + '\'' +
+                ", mTimeCreated=" + mTimeCreated +
+                ", checkList=" + checkList +
+                '}';
+    }
 }

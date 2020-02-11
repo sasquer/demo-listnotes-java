@@ -8,7 +8,11 @@ import androidx.lifecycle.MutableLiveData;
 import com.sasquer.listnotes.base.BaseViewModel;
 import com.sasquer.listnotes.data.AppRepository;
 import com.sasquer.listnotes.data.local.db.entity.Note;
+import com.sasquer.listnotes.data.local.db.entity.NoteCheckItem;
 import com.sasquer.listnotes.interactors.ToolbarActionsInteractor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -18,9 +22,9 @@ import io.reactivex.schedulers.Schedulers;
 public class NoteDetailsViewModel extends BaseViewModel {
     private static final String TAG = "NoteDetailsViewModel";
     private final MutableLiveData<String> title = new MutableLiveData<>();
-    private final MediatorLiveData<Note> currNote = new MediatorLiveData<>();
     private final MutableLiveData<Boolean> showConfirmDialog = new MutableLiveData<>();
     private final MutableLiveData<Boolean> confirmBack = new MutableLiveData<>();
+    private final MediatorLiveData<List<NoteCheckItem>> checkItems = new MediatorLiveData<>();
     private Note currentNote = null;
     private AppRepository mRepository;
 
@@ -29,10 +33,9 @@ public class NoteDetailsViewModel extends BaseViewModel {
                                 ToolbarActionsInteractor toolbarInteractor,
                                 NoteDetailsFragmentArgs args) {
         super(toolbarInteractor);
-//        setProgressing(true);
         mRepository = mAppRepository;
         int id = args.getNoteId();
-        Log.d(TAG, "NoteDetailsViewModel: init VM " + id);
+        Log.d(TAG, "Init VM " + id);
         if (id != -1) {
             disposable.add(
                     mRepository.getNoteById(id)
@@ -42,31 +45,31 @@ public class NoteDetailsViewModel extends BaseViewModel {
                                     note -> {
                                         currentNote = note;
                                         setTitle(currentNote.getTitle());
+                                        mRepository.addCheckItems(currentNote.getCheckList());
                                     }
                             )
             );
+        } else {
+            mRepository.addCheckItems(new ArrayList<>());
         }
+        checkItems.addSource(mAppRepository.observeCheckItems(), checkItems::postValue);
 
-//        currentNote = Transformations.switchMap(getNoteId(), input -> {
-//            if (input == -1) {
-//                title.setValue("");
-//                return new MutableLiveData<>(null);
-//            } else
-//                return mRepository.getNoteById(input);
-//        });
-//
-//        ((MediatorLiveData) currentNote2).addSource(mRepository.getNoteById(1), new Observer<Note>() {
-//            @Override
-//            public void onChanged(Note note) {
-//                ((MediatorLiveData<Note>) currentNote2).setValue(note);
-//            }
-//        });
+    }
 
-//        if (getNoteId().getValue() != -1) {
-////            title.setValue("");
-//            currentNote = new MutableLiveData<>(null);
-//        } else
-//        new Handler().postDelayed(() -> setProgressing(false), 2000);
+    public MutableLiveData<List<NoteCheckItem>> getCheckItems() {
+        return checkItems;
+    }
+
+    public void setCheckItems(List<NoteCheckItem> items) {
+        mRepository.updateCheckItemsAfterSwipe(items);
+    }
+
+    public void addCheckItem(NoteCheckItem item) {
+        mRepository.addCheckItem(item);
+    }
+
+    public void removeCheckItem(int positiop) {
+        mRepository.removeCheckItem(positiop);
     }
 
     public MutableLiveData<Boolean> isConfirmBack() {
@@ -75,22 +78,29 @@ public class NoteDetailsViewModel extends BaseViewModel {
 
     public void checkInputData() {
         if (currentNote != null) {
-            if (currentNote.getTitle().equals(getTitle().getValue())) {
+            if (currentNote.getTitle().equals(getTitle().getValue()) &&
+                    currentNote.getCheckList().equals(checkItems.getValue())) {
                 confirmBack.setValue(true);
             } else {
                 setShowConfirmDialog(true);
             }
         } else {
-            confirmBack.setValue(true);
+            if (getTitle().getValue() != null && !getTitle().getValue().isEmpty() ||
+                    checkItems.getValue() != null && !checkItems.getValue().isEmpty()) {
+                setShowConfirmDialog(true);
+            } else
+                confirmBack.setValue(true);
         }
     }
 
-    public void saveNoteToDatabase() {
+    public void saveNoteToDatabase(List<NoteCheckItem> list) {
         if (currentNote == null) {
             Note _note = new Note(title.getValue());
+            _note.setCheckList(list);
             mRepository.insertNote(_note);
         } else {
             currentNote.setTitle(title.getValue());
+            currentNote.setCheckList(list);
             mRepository.insertNote(currentNote);
         }
         confirmBack.setValue(true);

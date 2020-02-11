@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto">
 
     <data>
+
+        <variable
+            name="keyListener"
+            type="android.view.View.OnKeyListener" />
+
+        <variable
+            name="watcher"
+            type="android.text.TextWatcher" />
+
+        <variable
+            name="checkBoxListener"
+            type="android.widget.CompoundButton.OnCheckedChangeListener" />
 
         <variable
             name="item"
@@ -17,26 +30,33 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="4dp">
+        android:padding="2dp">
 
         <CheckBox
-            android:id="@+id/cb_check"
+            android:id="@+id/cbCheck"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="center" />
+            android:checked="@{item.checked}"
+            android:gravity="center"
+            bind:onCheckBoxClickListener="@{checkBoxListener}" />
 
         <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etValue"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@null"
+            android:enabled="@{!item.checked}"
             android:imeOptions="actionNext"
             android:inputType="text"
-            android:textSize="14sp" />
+            android:text="@{item.value}"
+            android:textSize="14sp"
+            bind:onKeyListener="@{keyListener}"
+            bind:textChangedListener="@{watcher}" />
 
         <androidx.appcompat.widget.AppCompatImageView
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.1"
             android:src="@drawable/ic_drag_handle" />
 
     </LinearLayout>

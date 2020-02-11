@@ -1,7 +1,7 @@
 package com.sasquer.listnotes.data.local.db.entity;
 
 public class NoteCheckItem {
-    private String value;
+    private String value = "";
     private boolean isEmpty = false;
     private boolean isChecked = false;
 
